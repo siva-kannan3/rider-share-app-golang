@@ -22,7 +22,7 @@ local_resource(
 
 
 docker_build_with_restart(
-  'ride-sharing/api-gateway',
+  'siva3k/ride-sharing-api-gateway',
   '.',
   entrypoint=['/app/build/api-gateway'],
   dockerfile='./infra/development/docker/api-gateway.Dockerfile',
@@ -75,7 +75,7 @@ k8s_resource('api-gateway', port_forwards=8081,
 ### Web Frontend ###
 
 docker_build(
-  'ride-sharing/web',
+  'siva3k/ride-sharing-web',
   '.',
   dockerfile='./infra/development/docker/web.Dockerfile',
 )
