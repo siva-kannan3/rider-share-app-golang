@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: trip-service
-          image: ride-sharing/trip-service
+          image: siva3k/ride-sharing-trip-service
           ports:
             - containerPort: 8083
           resources:
