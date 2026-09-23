@@ -1,35 +1,48 @@
 package main
 
 import (
-	"context"
+	"encoding/json"
 	"log"
-	"ride-sharing/services/trip-service/internal/domain"
-	"ride-sharing/services/trip-service/internal/infrastructure/repository"
-	"ride-sharing/services/trip-service/internal/service"
-	"time"
+	"net/http"
+	"ride-sharing/shared/env"
+)
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+var (
+	httpAddr = env.GetString("HTTP_ADDR", ":8083")
 )
 
 func main() {
-	ctx := context.Background()
-	inmemRepo := repository.NewInMemRepository()
+	mux := http.NewServeMux()
 
-	svc := service.NewService(inmemRepo)
+	mux.HandleFunc("POST /preview", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("received call from api gateway service")
 
-	fare := &domain.RideFareModel{
-		ID:                primitive.NewObjectID(),
-		UserID:            "223",
-		PackageSlug:       "sedan",
-		TotalPriceInCents: 240,
-		ExpiresAt:         time.Now(),
+		response := struct {
+			Message string
+		}{
+			Message: "trip preview created",
+		}
+
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write(responseBytes)
+	})
+
+	log.Println("Starting API Gateway")
+
+	server := &http.Server{
+		Addr:    httpAddr,
+		Handler: mux,
 	}
 
-	t, err := svc.CreateTrip(ctx, fare)
-	if err != nil {
-		log.Println(err)
+	if err := server.ListenAndServe(); err != nil {
+		log.Println("Trip service failed to start")
 	}
-
-	log.Println(t)
 
 }
