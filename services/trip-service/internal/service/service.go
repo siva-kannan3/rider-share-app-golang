@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"ride-sharing/services/trip-service/internal/domain"
+	internal_types "ride-sharing/services/trip-service/pkg/types"
 	"ride-sharing/shared/types"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -34,9 +36,16 @@ func (s *service) CreateTrip(ctx context.Context, fare *domain.RideFareModel) (*
 
 }
 
-func (svc *service) GetRoute(ctx context.Context, pickup *types.Coordinate, destination *types.Coordinate) (*types.OsrmApiResponse, error) {
-	osrmUrl := fmt.Sprintf("http://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?overview=true&geometries=geojson", pickup.Longitude, pickup.Latitude, destination.Longitude, destination.Latitude)
+func (svc *service) GetRoute(ctx context.Context, pickup *types.Coordinate, destination *types.Coordinate) (*internal_types.OsrmApiResponse, error) {
+	osrmUrl := fmt.Sprintf(
+		"http://router.project-osrm.org/route/v1/driving/%f,%f;%f,%f?geometries=geojson",
+		pickup.Longitude,
+		pickup.Latitude,
+		destination.Longitude,
+		destination.Latitude,
+	)
 
+	log.Println(osrmUrl)
 	resp, err := http.Get(osrmUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch routes from OSRM: %v", err)
@@ -49,7 +58,7 @@ func (svc *service) GetRoute(ctx context.Context, pickup *types.Coordinate, dest
 		return nil, fmt.Errorf("failed to read the response: %v", err)
 	}
 
-	var routesResponse types.OsrmApiResponse
+	var routesResponse internal_types.OsrmApiResponse
 
 	if err := json.Unmarshal(body, &routesResponse); err != nil {
 		return nil, fmt.Errorf("failed to parse the response: %v", err)

@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"ride-sharing/services/api-gateway/grpc_clients"
 	"ride-sharing/shared/contracts"
 )
 
@@ -16,6 +18,20 @@ func handleTripPreview(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
+	tripService, err := grpc_clients.NewTripServiceClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer tripService.Close()
+
+	tripPreview, err := tripService.Client.PreviewTrip(r.Context(), reqBody.toProto())
+	if err != nil {
+		log.Printf("Failed to preview trip: %v", err)
+		http.Error(w, "Failed to preview trip", http.StatusInternalServerError)
+		return
+	}
+
 	// validation
 	if reqBody.UserID == "" {
 		http.Error(w, "UserID is required", http.StatusBadRequest)
@@ -24,7 +40,9 @@ func handleTripPreview(w http.ResponseWriter, r *http.Request) {
 
 	// Call the Trip service
 
-	resp := contracts.APIResponse{}
+	resp := contracts.APIResponse{
+		Data: tripPreview,
+	}
 
 	WriteJSON(w, http.StatusCreated, resp)
 }
