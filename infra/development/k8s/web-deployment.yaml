@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: siva3k/ride-sharing-web
+          image: ride-sharing/web
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
