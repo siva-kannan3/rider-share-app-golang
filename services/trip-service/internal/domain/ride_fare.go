@@ -1,6 +1,7 @@
 package domain
 
 import (
+	internal_types "ride-sharing/services/trip-service/pkg/types"
 	pb "ride-sharing/shared/proto/trip"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -11,6 +12,7 @@ type RideFareModel struct {
 	UserID            string
 	PackageSlug       string // e.g. sedan, luxury, auto
 	TotalPriceInCents float64
+	Route             *internal_types.OsrmApiResponse
 	// ExpiresAt         time.Time
 }
 

@@ -10,6 +10,7 @@ import (
 
 	"ride-sharing/services/trip-service/internal/domain"
 	internal_types "ride-sharing/services/trip-service/pkg/types"
+	"ride-sharing/shared/proto/trip"
 	"ride-sharing/shared/types"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -31,6 +32,7 @@ func (s *service) CreateTrip(ctx context.Context, fare *domain.RideFareModel) (*
 		UserID:   fare.UserID,
 		Status:   "pending",
 		RideFare: fare,
+		Driver:   &trip.TripDriver{},
 	}
 	return s.repo.CreateTrip(ctx, t)
 
@@ -78,7 +80,7 @@ func (svc *service) EstimatePackagesPriceWithRoute(route *internal_types.OsrmApi
 	return estimateFares
 }
 
-func (svc *service) GenerateRideFares(ctx context.Context, fares []*domain.RideFareModel, userId string) ([]*domain.RideFareModel, error) {
+func (svc *service) GenerateRideFares(ctx context.Context, fares []*domain.RideFareModel, userId string, route *internal_types.OsrmApiResponse) ([]*domain.RideFareModel, error) {
 	computedFares := make([]*domain.RideFareModel, len(fares))
 
 	for i, fare := range fares {
@@ -88,6 +90,7 @@ func (svc *service) GenerateRideFares(ctx context.Context, fares []*domain.RideF
 			ID:                id,
 			PackageSlug:       fare.PackageSlug,
 			TotalPriceInCents: fare.TotalPriceInCents,
+			Route:             route,
 		}
 
 		if err := svc.repo.SaveRideFare(ctx, &cFare); err != nil {

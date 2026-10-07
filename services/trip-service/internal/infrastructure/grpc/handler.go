@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"ride-sharing/services/trip-service/internal/domain"
 	pb "ride-sharing/shared/proto/trip"
@@ -51,7 +52,7 @@ func (h *gRPCHandler) PreviewTrip(ctx context.Context, req *pb.PreviewTripReques
 
 	estimatedFares := h.service.EstimatePackagesPriceWithRoute(resp)
 
-	rideFares, err := h.service.GenerateRideFares(ctx, estimatedFares, userID)
+	rideFares, err := h.service.GenerateRideFares(ctx, estimatedFares, userID, resp)
 	if err != nil {
 		log.Println(err)
 		return nil, status.Errorf(codes.Internal, "failed to generate ride fare: %v", err)
@@ -70,17 +71,21 @@ func (h *gRPCHandler) CreateTrip(ctx context.Context, req *pb.CreateTripRequest)
 	fare, err := h.service.GetAndValidateFare(ctx, rideFareId, userID)
 	if err != nil {
 		log.Println(err)
-		return nil, status.Errorf(codes.Internal, "failed to get ride fare: %v", err)
+		return nil, fmt.Errorf("failed to validate fare: %v", err)
+	}
+
+	if fare == nil {
+		return nil, fmt.Errorf("fare does not exist")
 	}
 
 	// create trip
-	_, err = h.service.CreateTrip(ctx, fare)
+	tripResp, err := h.service.CreateTrip(ctx, fare)
 	if err != nil {
 		log.Println(err)
-		return nil, status.Errorf(codes.Internal, "failed to create trip: %v", err)
+		return nil, fmt.Errorf("failed to create trip: %v", err)
 	}
 
 	return &pb.CreateTripResponse{
-		TripID: "123",
+		TripID: tripResp.ID.Hex(),
 	}, nil
 }
